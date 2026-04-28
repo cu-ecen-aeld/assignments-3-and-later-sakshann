@@ -1,3 +1,7 @@
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 #include "systemcalls.h"
 
 /**
@@ -16,8 +20,18 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success
  *   or false() if it returned a failure
 */
+	int ret = system(cmd);
+	if(ret == -1)
+	{
+		return false;
+	}
+    // system() succeeded; now check the command's exit status
+    if (WIFEXITED(ret) && WEXITSTATUS(ret) == 0) 
+    {
+        return true;
+    }
 
-    return true;
+	return false;
 }
 
 /**
@@ -47,8 +61,8 @@ bool do_exec(int count, ...)
     command[count] = NULL;
     // this line is to avoid a compile warning before your implementation is complete
     // and may be removed
-    command[count] = command[count];
-
+    //command[count] = command[count];
+    va_end(args);
 /*
  * TODO:
  *   Execute a system command by calling fork, execv(),
@@ -58,10 +72,27 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
+	pid_t pid = fork();
+	if(pid < 0)
+	{
+		perror("fork failed");
+		return false;
+	}
+	if(pid == 0) //Child
+	{
+		execv(command[0], command);
+		perror("execv failed");
+		_exit(127); 	//127 -> exit code: command not found
+	}
 
-    va_end(args);
-
-    return true;
+	int status;
+	if (wait(&status) < 0) 
+	{
+    	perror("wait failed");
+  	  	return false;
+	}
+	
+	return WIFEXITED(status) && WEXITSTATUS(status) == 0;
 }
 
 /**
@@ -82,8 +113,8 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
     command[count] = NULL;
     // this line is to avoid a compile warning before your implementation is complete
     // and may be removed
-    command[count] = command[count];
-
+    //command[count] = command[count];
+	va_end(args);
 
 /*
  * TODO
@@ -93,7 +124,31 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *
 */
 
-    va_end(args);
+	int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+	if (fd < 0) 
+	{
+    	perror("open");
+    	return false;
+	}
+	pid_t pid = fork();
+	if(pid < 0)
+	{
+		perror("fork failed");
+		abort();
+		return false;
+	}
+	if(pid == 0) //Child
+	{
+		if (dup2(fd, STDOUT_FILENO) < 0) { perror("dup2"); abort(); }
+		close(fd);
+		execv(command[0], command);
+		perror("execv"); 
+		abort();
+	}
 
-    return true;
+	int status;
+	wait(&status);
+	close(fd);
+
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
 }
