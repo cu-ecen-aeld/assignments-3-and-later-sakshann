@@ -5,7 +5,7 @@
 set -e
 
 OUTDIR=$1
-OUTDIR=/home/saksham/Desktop/projects/embed_linux
+#OUTDIR=/home/saksham/Desktop/projects/embed_linux
 if [ -z "${OUTDIR}" ]; then
     OUTDIR=/home/saksham/Desktop/projects/embed_linux/
     echo "No outdir specified, using ${OUTDIR}"
