@@ -14,7 +14,8 @@ ARCH=arm64
 CROSS_COMPILE=aarch64-none-linux-gnu-
 #CROSS_COMPILE=/home/saksham/toolchains/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-
 
-WRITERDIR=/home/saksham/Desktop/projects/assignment-1-sakshamx/finder-app
+#WRITERDIR=/home/saksham/Desktop/projects/assignment-1-sakshamx/finder-app
+FINDER_APP_DIR=$(realpath $(dirname $0))
 
 if [ $# -lt 1 ]
 then
@@ -83,7 +84,7 @@ make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
 make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install CONFIG_PREFIX=${OUTDIR}/rootfs 
 
 cd "${OUTDIR}/rootfs"
-echo "CWD: $(pwd)"
+echo "RooTFS CWD: $(pwd)"
 
 echo "Library dependencies"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
@@ -106,8 +107,8 @@ sudo mknod -m 666 dev/null c 1 3
 sudo mknod -m 666 dev/console c 5 1
 
 # Clean and build the writer utility
-cd ${WRITERDIR}
-echo "CWD: $(pwd)"
+cd "${FINDER_APP_DIR}"
+echo "Finder app CWD: $(pwd)"
 make clean
 make CROSS_COMPILE=${CROSS_COMPILE} all
 # Copy the finder related scripts and executables to the /home directory
